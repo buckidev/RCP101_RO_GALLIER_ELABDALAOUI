@@ -1,0 +1,57 @@
+/*********************************************
+ * OPL 12.10.0.0 Model
+ * Author: benja
+ * Creation Date: 24 mars 2023 at 10:34:02
+ *********************************************/
+ 
+int Equipes = 9;
+int Jours = 2*(Equipes-1);
+range EquipesRange = 1..Equipes;
+range JoursRange = 2..Jours+1;
+
+dvar boolean match[JoursRange][EquipesRange][EquipesRange];
+dvar boolean repos[JoursRange][EquipesRange];
+dvar boolean recep[JoursRange][EquipesRange];
+dvar boolean exter[JoursRange][EquipesRange];
+dvar boolean idemRecep[JoursRange][EquipesRange];
+dvar boolean idemExter[JoursRange][EquipesRange];
+
+minimize sum(t in JoursRange, i in EquipesRange) idemRecep[t][i] + idemExter[i][i];
+
+subject to {
+
+  // Contraintes pour chaque journée
+  
+  forall(t in JoursRange) {
+  
+    // Contrainte : une équipe se repose
+    forall(i in EquipesRange)
+      sum(j in EquipesRange) match[t][i][j] + repos[t][i] == 1;
+    
+    // Contrainte : chaque équipe soit reçoit, soit est à l'extérieur, soit se repose
+    forall(i in EquipesRange) {
+      sum(j in EquipesRange) match[t][i][j] + repos[t][i] + recep[t][i] + exter[t][i] == 1;
+    }
+    
+    // Contrainte : chaque équipe se repose 2 fois (une fois pendant les matchs allers et une fois pendant les retour)
+    sum(i in EquipesRange) repos[t][i] == 2;
+    
+    // Contrainte : chaque équipe reçoit une fois l'autre équipe
+    forall(i in EquipesRange) {
+      sum(j in EquipesRange) sum(t2 in JoursRange) match[t2][i][j] == 1;
+      sum(j in EquipesRange) sum(t2 in JoursRange) match[t2][j][i] == 1;
+    }
+    
+    // Contrainte : l'équipe #i et l'équipe #j se rencontre au même numéro de journée des matches Aller et Retour (une fois à domicile et l'autre à l'extérieur)
+    forall(i in EquipesRange) {
+      forall(j in EquipesRange) {
+        sum(t2 in JoursRange) match[t2][i][j] + sum(t2 in JoursRange) match[t2][j][i] == 1;
+        match[t][i][j] + match[t][j][i] <= 1;
+      }
+    }
+  }
+}  
+  
+  
+  
+      

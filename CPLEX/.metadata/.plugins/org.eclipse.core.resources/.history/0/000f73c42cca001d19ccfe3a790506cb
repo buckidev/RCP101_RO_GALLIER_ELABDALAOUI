@@ -1,0 +1,51 @@
+/*********************************************
+ * OPL 12.10.0.0 Model
+ * Author: benja
+ * Creation Date: 24 mars 2023 at 10:34:02
+ *********************************************/
+ 
+int Equipes = 9;
+int Jours = 2*(Equipes-1);
+range Equipe = 1..Equipes;
+range Jour = 2..Jours+1;
+
+
+dvar boolean match[Jour][Equipe][Equipe];
+dvar boolean repos[Jour][Equipe];
+dvar boolean recep[Jour][Equipe];
+dvar boolean exter[Jour][Equipe];
+dvar boolean idemRecep[Jour][Equipe];
+dvar boolean idemExter[Jour][Equipe];
+
+minimize sum(t in Jour, i in Equipe) idemRecep[t][i] + idemExter[t][i];
+
+subject to {
+
+  // Contrainte 1 : chaque journée, une équipe se repose
+  forall(t in Jour) {
+    sum(i in Equipe) repos[t][i] == 1;
+  }
+
+  // Contrainte 2 : chaque équipe est soit en repos, soit en réception, soit à l'extérieur pour chaque journée
+  forall(t in Jour, i in Equipe) {
+    repos[t][i] + recep[t][i] + exter[t][i] == 1;
+  }
+
+  // Contrainte 3 : chaque équipe se repose 2 fois, une fois pendant les matchs aller et une fois pendant les matchs retour
+  forall(i in Equipe) {
+    sum(t in Jour : t <= Equipes - 1 || t > Equipes && t <= Jours) repos[t][i] == 2;
+  }
+
+  // Contrainte 4 : chaque équipe reçoit une fois l'autre équipe
+  forall(i in Equipe, j in Equipe : j > i) {
+    sum(t in Jour) match[t][i][j] + sum(t in Jour) match[t][j][i] == 1;
+  }
+  
+
+
+}
+
+  
+  
+  
+      

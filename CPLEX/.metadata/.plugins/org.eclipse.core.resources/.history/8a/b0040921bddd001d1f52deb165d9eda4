@@ -1,0 +1,52 @@
+/*********************************************
+ * OPL 12.10.0.0 Model
+ * Author: benja
+ * Creation Date: 24 mars 2023 at 10:34:02
+ *********************************************/
+ 
+int NumberEquipes = 9;
+int NumberJour = 2 * NumberEquipes;
+
+range rangeEquipe = 1..NumberEquipes;
+range rangeJours = 1..NumberJour;
+
+string NomsEquipes[rangeEquipe] = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
+
+
+dvar boolean match[rangeJours][rangeEquipe][rangeEquipe];
+dvar boolean repos[rangeJours][rangeEquipe];
+dvar boolean recep[rangeJours][rangeEquipe];
+dvar boolean exter[rangeJours][rangeEquipe];
+dvar boolean idemRecep[rangeJours][rangeEquipe];
+dvar boolean idemExter[rangeJours][rangeEquipe];
+
+minimize sum(t in rangeJours, i in rangeEquipe) idemRecep[t][i] + sum(t in rangeJours, i in rangeEquipe) idemExter[t][i];
+
+subject to {
+
+  // Contrainte 1 : chaque journée, une équipe se repose
+  forall(t in rangeJours) {
+    sum(i in rangeEquipe) repos[t][i] == 1;
+  }
+
+  // Contrainte 2 : chaque équipe est soit en repos, soit en réception, soit à l'extérieur pour chaque journée
+  forall(t in rangeJours, i in rangeEquipe) {
+    repos[t][i] + recep[t][i] + exter[t][i] == 1;
+  }
+
+  // Contrainte 3 : chaque équipe se repose 2 fois, une fois pendant les matchs aller et une fois pendant les matchs retour
+  forall(i in rangeEquipe) {
+    sum(t in rangeJours : t <= NumberEquipes - 1 || t > NumberEquipes && t <= NumberJour) repos[t][i] == 2;
+  }
+
+  // Contrainte 4 : chaque équipe reçoit une fois l'autre équipe
+  forall(i in rangeEquipe, j in rangeEquipe : j > i) {
+    sum(t in rangeJours) match[t][i][j] + sum(t in rangeJours) match[t][j][i] == 1;
+  }
+}
+
+
+  
+  
+  
+      

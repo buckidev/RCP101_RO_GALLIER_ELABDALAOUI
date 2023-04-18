@@ -1,0 +1,26 @@
+/*********************************************
+ * OPL 12.10.0.0 Model
+ * Author: benja
+ * Creation Date: 24 mars 2023 at 10:34:02
+ *********************************************/
+ 
+int NumberEquipes = 9;
+int NummberJour = 2 * NumberEquipes;
+string NomsEquipes[Equipes] = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
+int Jours = 2*(Equipes-1);
+range EquipesRange = 1..Equipes;
+range JoursRange = 2..Jours+1;
+
+
+dvar boolean match[JoursRange][EquipesRange][EquipesRange];
+dvar boolean repos[JoursRange][EquipesRange];
+dvar boolean recep[JoursRange][EquipesRange];
+dvar boolean exter[JoursRange][EquipesRange];
+dvar boolean idemRecep[JoursRange][EquipesRange];
+dvar boolean idemExter[JoursRange][EquipesRange];
+
+
+  
+  
+  
+      

@@ -2,8 +2,12 @@
 	<version>1.0</version>
 	<configs>
 		<config default="true" name="Configuration_PL1" category="opl">
+			<ref name="RCP101_RO_GALLIER_ELABDALAOUI_PL1.mod" type="model">
+			</ref>
 		</config>
 		<config default="false" name="Configuration_PL2" category="opl">
+			<ref name="RCP101_RO_GALLIER_ELABDALAOUI_PL2.mod" type="model">
+			</ref>
 		</config>
 		<config default="false" name="Configuration_PL3" category="opl">
 		</config>

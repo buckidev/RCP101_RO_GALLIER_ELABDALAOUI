@@ -1,0 +1,129 @@
+/*********************************************
+ * OPL 12.10.0.0 Model
+ * Author: benja
+ * Creation Date: 24 mars 2023 at 10:36:17
+ *********************************************/
+int NombreEquipes = 9;
+int NombreJours = 18;
+int Milieu = 9;
+
+
+range rangeEquipes = 1..NombreEquipes;
+range rangeJours = 1..NombreJours;
+range rangeJoursDecales = 2..NombreJours;
+range rangeJoursAller = 1..Milieu;
+range rangeJoursRetour = (Milieu + 1)..NombreJours;
+
+string NomsEquipes[rangeEquipes] = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
+
+/* Ce booléen indique si l’équipe #i reçoit l’équipe #j lors de la journée #t */
+ dvar boolean match[rangeJours][rangeEquipes][rangeEquipes];
+ 
+/* Ce booléen indique si l’équipe #i se repose lors de la journée #t */
+dvar boolean repos[rangeJours][rangeEquipes];
+
+/* Ce booléen indique si l’équipe #i reçoit lors de la journée #t */
+dvar boolean recep[rangeJours][rangeEquipes];
+
+/* Ce booléen indique si l’équipe #i est à l’extérieur lors de la journée #t */
+dvar boolean exter[rangeJours][rangeEquipes];
+
+/* Ces 2 booléens indiquent si l’équipe #i reçoit 2 fois de suite, ou est à l’extérieur 2 fois de suite.
+Attention : l’indice (range) du numéro de journée doit commencer à 2 (pour pouvoir comparer avec la journée #1) */
+dvar boolean idemRecep[rangeJoursDecales][rangeEquipes];
+dvar boolean idemExter[rangeJoursDecales][rangeEquipes];
+
+dvar float Resultat;
+
+
+/********************************************** MINIMISE ******************************************************/
+
+/* minimiser le nombre total de fois où une équipe reçoit 2 fois de suite ou va à l’extérieur 2 fois de suite */
+minimize Resultat;
+
+/******************************************** CONTRAINTES *****************************************************/
+
+subject to {
+  
+  /******************************************** REELLES *****************************************************/
+  
+  forall(t in rangeJours) {
+    //A chaque journée, une équipe se repose
+		(sum(i in rangeEquipes) repos[t][i]) == 1;
+		
+	//Pour chaque journée, chaque équipe : soit elle se repose, soit elle reçoit, soit elle est à l’extérieur
+		forall(i in rangeEquipes) {
+		  repos[t][i] + recep[t][i] + exter[t][i] == 1;
+		}
+		
+		//Limiter à 4 match par jour
+		sum(j in rangeEquipes, i in rangeEquipes) match[t][i][j] == 4;
+	}
+ 	
+	forall(i in rangeEquipes) {
+	  	//Chaque équipe se repose 2 fois (une fois pendant les matchs allers et une fois pendant les retour)
+		sum(t in rangeJoursAller) repos[t][i] == 1;
+		sum(t in rangeJoursRetour) repos[t][i] == 1;
+		
+		forall(j in rangeEquipes : i!=j) {
+		  //Dans tout le championnat : chaque équipe reçoit une fois l’autre équipe
+		  sum(t in rangeJours) match[t][i][j] == 1;
+		}
+	}
+	
+	//L’équipe #i et l’équipe #j se rencontrent au même numéro de journée des matches Aller et Retour (une fois à domicile et l’autre à l’extérieur).
+	forall(t in rangeJoursAller, i in rangeEquipes, j in rangeEquipes) {
+	  match[t][i][j] == match[t + Milieu][j][i];
+	}
+	
+	/******************************************** INTERNES *****************************************************/
+	forall(t in rangeJours, i in rangeEquipes) {
+	  //Lien entre la variable recep[t][i] et match[t][i][j]
+	  sum(j in rangeEquipes) match[t][i][j] == recep[t][i];
+	  
+	  //Lien entre la variable exter[t][i] et match[t][i][j]
+	  sum(j in rangeEquipes) match[t][j][i] == exter[t][i];
+	}
+	
+	forall(t in rangeJoursDecales, i in rangeEquipes) {
+		//Pour chaque équipe et chaque journée >= 2 : idemRecep[t][i] vaut 1 si recep[t][i]==1 et recep[t-1][i]==1
+		idemRecep[t][i]==(recep[t][i]==1 && recep[t-1][i]==1);
+	
+		//Pour chaque équipe et chaque journée >= 2 : idemExter[k][i] vaut 1 si exter[k][i]==1 et exter[k-1][i]==1
+		idemExter[t][i]==(exter[t][i]==1 && exter[t-1][i]==1);
+	}
+	
+	Resultat == sum(t in rangeJoursDecales, i in rangeEquipes)(idemExter[t][i] + idemRecep[t][i]);
+		
+}
+
+
+/******************************************** EXECUTE *****************************************************/
+
+ execute {
+       
+       for (var t = 1; t < NombreJours + 1; t++) {
+         
+         //Journée + numéro
+         write("Journee #" + t + " ");
+         
+         for (var i = 1; i < NombreEquipes + 1; i++) {
+           for (var j = 1; j < NombreEquipes + 1; j++) {
+             if (match[t][i][j] == 1) {
+               //Liste des matchs de la journée
+               write(NomsEquipes[i] + "vs" + NomsEquipes[j] + " ");
+             }
+           }
+         }
+         
+         for (var i = 1; i < NombreEquipes + 1; i++) {
+           if (repos[t][i] == 1) {
+             //Liste des équipes en repos de la journée
+             write(NomsEquipes[i] + " ");
+           }
+       	}
+       	
+       	//Retour à la ligne
+       	write ("\n");
+     }       
+ }

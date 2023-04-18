@@ -1,0 +1,95 @@
+/*********************************************
+ * OPL 12.10.0.0 Model
+ * Author: benja
+ * Creation Date: 24 mars 2023 at 10:35:31
+ *********************************************/
+int NombreEquipes = 9;
+int NombreJournees = 18;
+int Milieu = 9;
+
+range rangeJournees = 1..NombreJournees; 
+range rangeJourneesAller = 1..NombreEquipes;  
+range rangeJourneesRetour = (Milieu + 1)..NombreJournees; 
+range rangeEquipes = 1..NombreEquipes; 
+range rangeJourneesDecales = 2..NombreJournees;
+
+dvar boolean match[rangeJournees][rangeEquipes][rangeEquipes];
+dvar boolean repos[rangeJournees][rangeEquipes];
+dvar boolean recep[rangeJournees][rangeEquipes];
+dvar boolean exter[rangeJournees][rangeEquipes];
+dvar boolean idemRecep[rangeJournees][rangeEquipes];
+dvar boolean idemExter[rangeJournees][rangeEquipes];
+
+string NomsEquipes[rangeEquipes] = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
+
+dvar float Resultat;
+
+minimize Resultat;
+
+subject to  {
+
+ forall(i in rangeEquipes){
+   //Chaque équipe se repose 2 fois (une fois pendant les matchs allers et une fois pendant les retour)
+   sum(t in rangeJourneesAller) repos[t][i] == 1;
+   sum(t in rangeJourneesRetour) repos[t][i] == 1;
+   forall(j in rangeEquipes : i != j) {
+	  sum(t in rangeJournees) match[t][i][j] == 1;
+   } 
+ }
+ 
+ forall(i in rangeEquipes, j in rangeEquipes : j != i){
+   //Dans tout le championnat : chaque équipe reçoit une fois l’autre équipe
+   //L’équipe #i et l’équipe #j se rencontrent au même numéro de journée des matches Aller et Retour (une fois à domicile et l’autre à l’extérieur)
+   sum(t in rangeJourneesAller) (match[t][i][j] + match[t][j][i]) == 1;
+   sum(t in rangeJourneesRetour) (match[t][i][j] + match[t][j][i]) == 1;
+ }
+ 
+ 
+ forall(t in rangeJournees){
+   //A chaque journée, une équipe se repose
+   sum(i in rangeEquipes) repos[t][i] == 1;
+  
+   forall(i in rangeEquipes){
+     //Pour chaque journée, chaque équipe : soit elle se repose, soit elle reçoit, soit elle est à l’extérieur
+     repos[t][i] + recep[t][i] + exter[t][i] == 1;
+   }
+   
+   forall(i in rangeEquipes){
+     //Lien entre la variable recep[t][i] et match[t][i][j]
+     sum(j in rangeEquipes) match[t][i][j] == recep[t][i] ;
+     //Lien entre la variable exter[t][i] et match[t][i][j]
+     sum(j in rangeEquipes) match[t][j][i] == exter[t][i] ;
+   }  
+ }
+ 
+ forall(t in rangeJourneesDecales, i in rangeEquipes) {
+    //Pour chaque équipe et chaque journée >= 2 : idemRecep[t][i] vaut 1 si recep[t][i]==1 et recep[t-1][i]==1.
+	idemRecep[t][i] == (recep[t][i] == 1 && recep[t-1][i] == 1);	
+	//Pour chaque équipe et chaque journée >= 2 : idemExter[k][i] vaut 1 si exter[k][i]==1 et exter[k-1][i]==1.
+	idemExter[t][i] == (exter[t][i]==1 && exter[t-1][i]==1);
+ }
+	
+ forall(t in rangeJourneesAller,i in rangeEquipes,j in rangeEquipes){
+   match[t][i][j] == match[t + Milieu][j][i];
+ } 
+ 
+ Resultat == sum(t in rangeJournees, i in rangeEquipes)(idemExter[t][i] + idemRecep[t][i]);
+}
+
+ execute {
+   for(var t = 1; t <= NombreJournees; t++){
+     write("\n Journée #" + t);
+     for(var i = 1; i <= NombreEquipes; i++){       
+       for(var j = 1; j <= NombreEquipes; j++){
+         if(match[t][i][j] == 1){
+           write(" " + NomsEquipes[i] + " vs " + NomsEquipes[j]);
+         }
+       }            
+     }
+     for(var i = 1; i <= NombreEquipes; i++){  
+       if(repos[t][i]==1){
+         write("    repos pour : " + NomsEquipes[i]);
+       }  
+     }     
+   }
+ }
