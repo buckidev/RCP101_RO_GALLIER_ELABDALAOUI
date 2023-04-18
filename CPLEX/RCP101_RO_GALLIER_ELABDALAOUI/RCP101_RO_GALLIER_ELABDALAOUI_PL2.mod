@@ -67,7 +67,7 @@ subject to  {
    sum(i in rangeEquipes) repos[t][i] == 1;
   
    forall(i in rangeEquipes){
-     //Pour chaque journée, une équipe peut soit se reposer, soit recevoir ou soit être à l'extérieur
+     //Pour chaque journée, une équipe peut soit se reposer, soit recevoir ou soit être à lextérieur
      repos[t][i] + recep[t][i] + exter[t][i] == 1;
    }
    
